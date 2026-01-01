@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 import random
 import string
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = FastAPI(title="Car Service Booking API", version="1.0.0")
 
@@ -21,29 +21,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Demo slots data
-demo_slots = [
-    # Today (2025-12-31)
-    {"date": "2025-12-31", "time": "09:00 AM", "available": False},
-    {"date": "2025-12-31", "time": "11:00 AM", "available": True},
-    {"date": "2025-12-31", "time": "01:00 PM", "available": False},
-    {"date": "2025-12-31", "time": "03:00 PM", "available": True},
-    {"date": "2025-12-31", "time": "05:00 PM", "available": True},
+# Function to generate demo slots for 3 days starting from today
+def generate_demo_slots():
+    """Generate slots for today, tomorrow, and day after tomorrow"""
+    slots = []
+    time_slots = ["09:00 AM", "11:00 AM", "01:00 PM", "03:00 PM", "05:00 PM"]
 
-    # Tomorrow (2026-01-01)
-    {"date": "2026-01-01", "time": "09:00 AM", "available": True},
-    {"date": "2026-01-01", "time": "11:00 AM", "available": True},
-    {"date": "2026-01-01", "time": "01:00 PM", "available": False},
-    {"date": "2026-01-01", "time": "03:00 PM", "available": True},
-    {"date": "2026-01-01", "time": "05:00 PM", "available": True},
+    # Get current date
+    today = datetime.now().date()
 
-    # Day after tomorrow (2026-01-02)
-    {"date": "2026-01-02", "time": "09:00 AM", "available": True},
-    {"date": "2026-01-02", "time": "11:00 AM", "available": True},
-    {"date": "2026-01-02", "time": "01:00 PM", "available": True},
-    {"date": "2026-01-02", "time": "03:00 PM", "available": True},
-    {"date": "2026-01-02", "time": "05:00 PM", "available": True},
-]
+    # Generate slots for 3 days
+    for day_offset in range(3):
+        current_date = today + timedelta(days=day_offset)
+        date_str = current_date.strftime("%Y-%m-%d")
+
+        # For today (day 0), mark some slots as unavailable
+        # For future days, make all slots available
+        for time_slot in time_slots:
+            if day_offset == 0:
+                # Today: randomly mark some slots as unavailable
+                available = random.choice([True, True, False])  # 66% available
+            else:
+                # Tomorrow and day after: all available
+                available = True
+
+            slots.append({
+                "date": date_str,
+                "time": time_slot,
+                "available": available
+            })
+
+    return slots
+
+# Generate demo slots on server start
+demo_slots = generate_demo_slots()
 
 
 # Pydantic models
